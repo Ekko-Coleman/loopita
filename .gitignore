@@ -1,0 +1,16 @@
+# Loopita runtime state (per-run task lists, agent logs, snapshots, checkpoints)
+.loopita/
+
+# skill-creator eval workspace lives as a sibling, but ignore any local copy
+*-workspace/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# macOS
+.DS_Store
+
+# agentops / session tooling state (not part of the skill)
+.agents/

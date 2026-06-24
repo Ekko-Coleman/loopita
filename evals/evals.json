@@ -1,0 +1,27 @@
+{
+  "skill_name": "loopita",
+  "notes": "Each task is deliberately small and self-contained (the subagent creates its own scratch project) so an eval run is a real-but-cheap orchestration. The three tasks are shaped to exercise the three strategies: linear, loop, and swarm. We judge whether Loopita selects a sensible strategy, keeps the orchestrator lean (offloads to .loopita/ state files, spawns scoped sub-agents), and produces an audit report — not just whether the code works.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "linear-single-change",
+      "prompt": "In a fresh scratch directory, create a tiny Python module `temps.py` with a function `c_to_f(celsius)` that converts Celsius to Fahrenheit, plus a `tests/test_temps.py` with pytest cases covering 0, 100, and a negative value. This is one small coherent change. Get it implemented and the tests passing.",
+      "expected_output": "Loopita recognizes this as a single coherent change, selects the LINEAR strategy, spawns ONE scoped Task sub-agent with the boilerplate contract, the sub-agent maintains a tracking file and returns minimal signal, the orchestrator reads the tracking file (does not retain the agent's internals), and reports completion with a per-agent audit summary. Code: c_to_f correct, 3 tests pass.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "loop-until-green",
+      "prompt": "In a fresh scratch directory, set up a small Python project with a `calc.py` containing `add`, `sub`, and `mul`, and a `tests/test_calc.py` whose `mul` test currently fails because `mul` is implemented as repeated addition with an off-by-one bug. Then keep iterating — run pytest, read the failure, fix, re-run — until the entire suite passes. Stop only when tests are green.",
+      "expected_output": "Loopita recognizes the explicit end-condition ('until tests pass') and selects the LOOP strategy, setting up an iterate-run-fix cycle with the end-condition state and a per-loop time budget (it should reference /loop + ScheduleWakeup semantics). It logs each iteration to the audit log and terminates when the suite is green, then reports iterations used and elapsed time.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "swarm-independent-slices",
+      "prompt": "In a fresh scratch directory, build a small CLI tool `exporter` with three INDEPENDENT exporter modules — `export_json.py`, `export_csv.py`, and `export_yaml.py` — each exposing a `dump(records: list[dict]) -> str` function and each with its own unit test file. The three are independent and non-overlapping. Build all three and get every test passing.",
+      "expected_output": "Loopita recognizes three independent non-overlapping slices and selects the SWARM strategy, driving the native Workflow tool (parallel fan-out with worktree isolation and a token budget) — one scoped agent per module — then a merge step reconciles the worktrees and the orchestrator signs off. It reports per-agent tokens/time and the technique used. All three modules + their tests pass.",
+      "files": []
+    }
+  ]
+}

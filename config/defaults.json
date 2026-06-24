@@ -1,0 +1,8 @@
+{
+  "context_threshold_tokens": 300000,
+  "per_loop_time_limit_hours": 24,
+  "quota_window_hours": 5,
+  "max_parallel_agents": 8,
+  "stale_tracking_seconds": 900,
+  "loopita_home": ".loopita"
+}
