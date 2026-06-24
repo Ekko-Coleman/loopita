@@ -149,7 +149,7 @@ python scripts/tracking.py stale --home "$LOOPITA_HOME" --run-id <run-id> \
   "this is sequential, not parallel"), stop spawning conflicting slices and re-select the strategy
   for the affected subtree — full procedure in `references/strategy-selection.md` (Adaptive
   replanning). Replanning early is cheap; a doomed merge is expensive.
-- **Dashboard frame (optional):** render the whole run as one styled frame — `python scripts/render.py frame --home "$LOOPITA_HOME" --run-id <run-id>` (plain text if `rich` is absent). For a continuously-updating view the *user* can run `python scripts/monitor.py --run-id <run-id>` in a side pane. See `references/tui-dashboard.md`.
+- **Dashboard frame (optional):** render the whole run as one styled frame — `python scripts/render.py frame --home "$LOOPITA_HOME" --run-id <run-id>` (plain text if `rich` is absent). For a continuously-updating view, **offer to open it for the user** (don't just do it): ask first, then `python scripts/dashboard.py launch --run-id <run-id> --home "$LOOPITA_HOME"` (auto-detects tmux/iTerm/Terminal; prints the command to paste if it can't spawn). Check deps with `python scripts/dashboard.py deps`; if `rich` is missing, **offer** `deps --install` before launching. Never open a window or install a package without asking. See `references/tui-dashboard.md`.
 
 ## 6. Collect
 
@@ -229,7 +229,7 @@ All helpers: `python scripts/<name>.py [--home <dir>] <subcommand> [args]`, prin
 | agent tracking | `tracking.py create` · `tracking.py update` · `tracking.py get` · `tracking.py query` · `tracking.py stale` |
 | audit log | `audit.py log` · `audit.py query` · `audit.py summary` |
 | report + retro | `report.py build` · `report.py retro` |
-| live dashboard | `render.py frame` · `render.py json` · `monitor.py` (live, user-run) |
+| live dashboard | `render.py frame` · `render.py json` · `dashboard.py deps` · `dashboard.py launch` (ask first) · `monitor.py` (live) |
 | learnings | `learnings.py add` · `learnings.py list` · `learnings.py apply` |
 
 ## Reference files (read on demand)

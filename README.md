@@ -42,7 +42,7 @@ orchestration (multi-step builds, long loops, parallelizable features, research 
 | `references/conventions.md` | **The contract** — runtime file layout + tracking/audit/task schemas. |
 | `references/*.md` | Strategy selection, model selection, sub-agent contract, pause/resume, reporting, learning. |
 | `scripts/*.py` | `state`, `tracking`, `audit`, `report`, `learnings` — stdlib-only helpers. |
-| `scripts/render.py`, `scripts/monitor.py` | On-demand dashboard frame + optional live monitor (optional `rich` dependency). |
+| `scripts/render.py`, `scripts/monitor.py`, `scripts/dashboard.py` | On-demand dashboard frame, optional live monitor, and a launcher that checks deps + spawns a side pane (all optional `rich`). |
 | `evals/evals.json` | skill-creator test orchestration tasks. |
 
 ## Configuration

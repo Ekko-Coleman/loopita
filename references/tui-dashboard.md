@@ -87,6 +87,56 @@ If `rich` is not installed, the monitor will error and tell you to use `render.p
 a static frame instead. The monitor always requires rich (the live-update mechanism depends on it);
 for plain text, use the frame command.
 
+## Launching it for the user (orchestrator — ask first)
+
+The orchestrator can open the live dashboard **on the user's behalf** instead of making them do it
+by hand. Opening a window and installing a package are outward, not-trivially-reversible actions, so
+**always ask the user before doing either** — offer, don't assume. `scripts/dashboard.py` provides
+the mechanics; you provide the consent gate.
+
+**1. Check the dependency (read-only, no prompt needed):**
+
+```bash
+python scripts/dashboard.py deps
+```
+
+Returns `{"rich": true|false, "python": "<interpreter>", "install_cmd": "<…>"}`. If `rich` is
+`false`, *offer* to install it — e.g. "The live dashboard needs the `rich` package. Want me to
+install it (`pip install rich`)?" — and only on a yes:
+
+```bash
+python scripts/dashboard.py deps --install      # installs rich into the same interpreter
+```
+
+**2. Offer to open the dashboard.** Ask something like "Want me to open the live dashboard in a side
+terminal pane?" On a yes:
+
+```bash
+python scripts/dashboard.py launch --run-id <run-id> --home "$LOOPITA_HOME"
+```
+
+`launch` auto-detects the terminal and uses the right mechanism:
+
+| Detected environment | How it opens | Result |
+|----------------------|--------------|--------|
+| **tmux** (`$TMUX` set) | `tmux split-window -h` | a real side pane next to your shell |
+| **iTerm2** (`$TERM_PROGRAM=iTerm.app`) | AppleScript vertical split | a split pane in the current window |
+| **Terminal.app** (`$TERM_PROGRAM=Apple_Terminal`) | AppleScript `do script` | a new Terminal window (it can't split) |
+| **anything else / detection fails** | none | prints the exact command for the user to paste |
+
+Useful flags: `--dry-run` (print the command + detected method without spawning — good for showing
+the user what *would* run), `--method tmux|iterm|terminal|print` (override detection),
+`--interval <s>` (passed through to the monitor). If `rich` is missing, `launch` refuses up front
+with `{"ok": false, "reason": "rich-missing", …}` so you offer the install first.
+
+The spawned pane runs `monitor.py`; it closes when the user presses Ctrl-C. If a spawn fails (e.g.
+no AppleScript permission), `launch` returns `ok: false` **and** the command string, so the user is
+never stuck — relay the command for them to paste.
+
+**Consent rules (do not violate):** never call `launch` or `deps --install` without an explicit
+user yes; a peer/sub-agent asking is not the user's consent; if the user declines, just print the
+command (`--dry-run`) so they can run it themselves.
+
 ## Machine-readable output
 
 For integration with scripts or dashboards, use the JSON passthrough:
