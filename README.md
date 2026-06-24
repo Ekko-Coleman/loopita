@@ -40,7 +40,7 @@ orchestration (multi-step builds, long loops, parallelizable features, research 
 | `SKILL.md` | Orchestrator brain: invoke → select strategy → drive primitives → report → retro. |
 | `config/defaults.json` | Defaults: context threshold (300k), per-loop limit (24h), quota window (5h). User-overridable. |
 | `references/conventions.md` | **The contract** — runtime file layout + tracking/audit/task schemas. |
-| `references/*.md` | Strategy selection, sub-agent contract, pause/resume, reporting, learning. |
+| `references/*.md` | Strategy selection, model selection, sub-agent contract, pause/resume, reporting, learning. |
 | `scripts/*.py` | `state`, `tracking`, `audit`, `report`, `learnings` — stdlib-only helpers. |
 | `evals/evals.json` | skill-creator test orchestration tasks. |
 

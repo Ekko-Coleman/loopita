@@ -93,6 +93,7 @@ def cmd_add_task(args: argparse.Namespace, home: Path) -> None:
         "title": args.title,
         "scope": args.scope,
         "strategy": args.strategy,
+        "model": getattr(args, "model", None),
         "status": "pending",
         "agent_ids": [],
         "depends_on": c.split_csv(args.depends_on),
@@ -115,6 +116,8 @@ def cmd_set_task(args: argparse.Namespace, home: Path) -> None:
         patch["signal_summary"] = args.signal
     if args.agent_ids is not None:
         patch["agent_ids"] = c.split_csv(args.agent_ids)
+    if getattr(args, "model", None) is not None:
+        patch["model"] = args.model
     try:
         c.patch_jsonl(path, "task_id", args.task_id, patch)
     except KeyError as exc:
@@ -218,13 +221,13 @@ def _selftest(home: Path) -> None:
     assert c.read_json(_run_json_path(home, rid))["status"] == "running"
 
     cmd_add_task(ns(run_id=rid, task_id="t1", title="do it", scope="x",
-                    strategy="swarm", depends_on="t0,t-1",
+                    strategy="swarm", model="haiku", depends_on="t0,t-1",
                     created_at="2026-06-24T17:32:00Z"), home)
     cmd_add_task(ns(run_id=rid, task_id="t2", title="other", scope="y",
                     strategy="swarm", depends_on=None,
                     created_at="2026-06-24T17:32:00Z"), home)
     cmd_set_task(ns(run_id=rid, task_id="t1", status="done",
-                    signal="all green", agent_ids="a1,a2",
+                    signal="all green", agent_ids="a1,a2", model="sonnet",
                     updated_at="2026-06-24T17:40:00Z"), home)
     rows = c.read_jsonl(_tasks_path(home, rid))
     assert len(rows) == 2, rows
@@ -233,6 +236,10 @@ def _selftest(home: Path) -> None:
     assert t1["signal_summary"] == "all green"
     assert t1["agent_ids"] == ["a1", "a2"]
     assert t1["depends_on"] == ["t0", "t-1"]
+    assert t1["model"] == "sonnet", t1  # add-task set haiku, set-task escalated to sonnet
+    # a task added without --model defaults to null
+    t2 = next(r for r in rows if r["task_id"] == "t2")
+    assert t2["model"] is None, t2
 
     # upsert replaces, never duplicates
     cmd_add_task(ns(run_id=rid, task_id="t1", title="renamed", scope="x",
@@ -332,6 +339,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--title", required=True)
     s.add_argument("--scope", default=None)
     s.add_argument("--strategy", default=None)
+    s.add_argument("--model", default=None,
+                   help="model tier for this task's sub-agent(s), e.g. opus|sonnet|haiku|fable")
     s.add_argument("--depends-on", default=None, dest="depends_on")
     s.add_argument("--created-at", required=True, dest="created_at")
     s.set_defaults(func=cmd_add_task)
@@ -342,6 +351,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--status", default=None)
     s.add_argument("--signal", default=None)
     s.add_argument("--agent-ids", default=None, dest="agent_ids")
+    s.add_argument("--model", default=None,
+                   help="update the model tier for this task")
     s.add_argument("--updated-at", required=True, dest="updated_at")
     s.set_defaults(func=cmd_set_task)
 

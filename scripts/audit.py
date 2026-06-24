@@ -35,6 +35,7 @@ def cmd_log(args: argparse.Namespace, home: Path) -> None:
         "task_id": args.task_id,
         "event": args.event,
         "strategy": args.strategy,
+        "model": getattr(args, "model", None),
         "tokens": args.tokens,
         "duration_ms": args.duration_ms,
         "note": args.note,
@@ -94,7 +95,7 @@ def _selftest(home: Path) -> None:
     rid = "run-test"
     ns = argparse.Namespace
     cmd_log(ns(run_id=rid, event="spawn", agent_id="a1", task_id="t1",
-               strategy="swarm", tokens=None, duration_ms=None,
+               strategy="swarm", model="haiku", tokens=None, duration_ms=None,
                note="spawned", ts="2026-06-24T17:31:00Z"), home)
     cmd_log(ns(run_id=rid, event="signal", agent_id="a1", task_id="t1",
                strategy="swarm", tokens=84852, duration_ms=23332,
@@ -110,6 +111,11 @@ def _selftest(home: Path) -> None:
         sys.stdout = old
     q = _json.loads(buf.getvalue())
     assert len(q) == 1 and q[0]["agent_id"] == "a1", q
+
+    # the spawn event records the model the agent ran on
+    all_rows = c.read_jsonl(_audit_path(home, rid))
+    spawn = next(r for r in all_rows if r["event"] == "spawn")
+    assert spawn["model"] == "haiku", spawn
 
     s = summarize(home, rid)
     assert s["total_tokens"] == 85852, s
@@ -136,6 +142,8 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--agent-id", default=None, dest="agent_id")
     s.add_argument("--task-id", default=None, dest="task_id")
     s.add_argument("--strategy", default=None)
+    s.add_argument("--model", default=None,
+                   help="model the sub-agent ran on, e.g. opus|sonnet|haiku|fable")
     s.add_argument("--tokens", default=None, type=int)
     s.add_argument("--duration-ms", default=None, type=int, dest="duration_ms")
     s.add_argument("--note", default=None)

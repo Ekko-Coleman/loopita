@@ -40,7 +40,7 @@ not autonomous background processes. Never imply Loopita does things on its own 
 1. PREPARE   read persistent learnings; set up run state; echo config to the user
 2. ANALYZE   understand the task; decompose into tasks.jsonl rows
 3. SELECT    pick linear | loop | swarm  (references/strategy-selection.md)
-4. DRIVE     run the chosen primitive; inject the sub-agent contract into every agent
+4. DRIVE     run the chosen primitive; pick the cheapest capable model per agent; inject the contract
 5. MONITOR   poll tracking files; offload your own context; detect stale agents; replan on escalation
 6. COLLECT   gather minimal signal; for swarm, merge worktrees and sign off
 7. REPORT    assemble the audit report; answer retro questions
@@ -80,11 +80,15 @@ this run.
 Decompose the task into one or more `tasks.jsonl` rows (`add-task`), giving each a `scope` and any
 `depends_on` edges. Then pick the strategy per **`references/strategy-selection.md`** — read it now
 if the choice isn't obvious. The model (you) is the **final arbiter**; the heuristics and learned
-bullets narrow the choice but don't bind you. Record the decision:
+bullets narrow the choice but don't bind you. Also pick the **model tier** each task's sub-agent
+should run on (`--model`, default `null` = inherit) — see step 4 and
+**`references/model-selection.md`**; you can leave it for step 4 and patch it with `set-task`.
+Record the decision:
 
 ```
 python scripts/state.py add-task --home "$LOOPITA_HOME" --run-id <run-id> --task-id t1 \
-  --title "<…>" --scope "<files/dirs>" --strategy <s> [--depends-on t0] --created-at <ISO>
+  --title "<…>" --scope "<files/dirs>" --strategy <s> [--model <opus|sonnet|haiku|fable>] \
+  [--depends-on t0] --created-at <ISO>
 python scripts/audit.py log --home "$LOOPITA_HOME" --run-id <run-id> \
   --event strategy --strategy <s> --note "<why this strategy>" --ts <ISO>
 ```
@@ -99,6 +103,16 @@ block appended to its brief (the copy-paste template + the why is in
 **`references/subagent-contract.md`**). The contract makes the agent self-report to its tracking
 files, finish as much as possible before returning, hand back only a tight signal, and escalate
 plan-breakers. That contract is what keeps *you* lean.
+
+**Pick the model per agent — don't default to Opus.** Sub-agents inherit *your* model unless you
+set one, so spawning blind runs every slice on the most expensive tier. For each agent choose the
+**cheapest model that can reliably do the task given the brief you're handing it** (`haiku` for
+mechanical/fully-specified work, `sonnet` as the coding workhorse, `opus` only for genuinely hard
+reasoning or the correctness-critical merge), and set it at spawn: the `model` parameter on `Task`/
+`Agent`, or `agent(prompt, { model, effort })` inside a `Workflow` (use `effort: 'low'` for cheap
+stages). A richer brief lets a cheaper model succeed — pair the two. Start cheap and escalate one
+task to a higher tier only on evidence (a `blocked`/low-quality return). Full tier table, per-
+strategy guidance, and how to record the choice are in **`references/model-selection.md`**.
 
 **Linear** — spawn one scoped `Task` sub-agent with the contract. It owns the whole change.
 
@@ -152,9 +166,12 @@ python scripts/state.py set-task --home "$LOOPITA_HOME" --run-id <run-id> --task
 
 ```
 python scripts/audit.py log --home "$LOOPITA_HOME" --run-id <run-id> --agent-id <id> \
-  --task-id t1 --event signal --strategy <s> --tokens <n> --duration-ms <n> \
+  --task-id t1 --event signal --strategy <s> --model <m> --tokens <n> --duration-ms <n> \
   --note "<outcome>" --ts <ISO>
 ```
+
+Stamp `--model` on the agent's `spawn` and `signal` events (the same tier you spawned it with) so
+the report's **Model** column and the retro can judge whether the cheaper tiers held up.
 
 ## 7. Report and retro
 
@@ -217,6 +234,7 @@ All helpers: `python scripts/<name>.py [--home <dir>] <subcommand> [args]`, prin
 
 - `references/conventions.md` — runtime file layout + all schemas (the contract).
 - `references/strategy-selection.md` — choosing linear/loop/swarm; adaptive replanning.
+- `references/model-selection.md` — choosing the cheapest capable model per sub-agent.
 - `references/subagent-contract.md` — the boilerplate brief for every sub-agent.
 - `references/pause-resume.md` — checkpoint/resume + crash recovery + quota pacing.
 - `references/reporting.md` — metric capture, final report, retro query mode.
