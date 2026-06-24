@@ -122,7 +122,8 @@ python scripts/dashboard.py launch --run-id <run-id> --home "$LOOPITA_HOME"
 | **tmux** (`$TMUX` set) | `tmux split-window -h` | a real side pane next to your shell |
 | **iTerm2** (`$TERM_PROGRAM=iTerm.app`) | AppleScript vertical split | a split pane in the current window |
 | **Terminal.app** (`$TERM_PROGRAM=Apple_Terminal`) | AppleScript `do script` | a new Terminal window (it can't split) |
-| **anything else / detection fails** | none | prints the exact command for the user to paste |
+| **other terminal on macOS** (VS Code, JetBrains, ssh, … with `osascript`) | AppleScript `do script` | a new Terminal.app window (universal mac fallback) |
+| **no spawnable terminal** (non-macOS, or `osascript` missing) | none | prints the exact command for the user to paste |
 
 Useful flags: `--dry-run` (print the command + detected method without spawning — good for showing
 the user what *would* run), `--method tmux|iterm|terminal|print` (override detection),

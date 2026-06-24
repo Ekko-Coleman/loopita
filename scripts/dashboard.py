@@ -26,6 +26,7 @@ from __future__ import annotations
 import argparse
 import os
 import shlex
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -96,13 +97,23 @@ def _monitor_cmd(home: Path, run_id: str, interval: float) -> str:
 
 
 def _detect_method() -> str:
-    """Best-effort detection of the surrounding terminal."""
+    """Best-effort detection of the surrounding terminal.
+
+    Preference order: a real split (tmux / iTerm2) > a native split-or-window
+    (Terminal.app) > a new macOS Terminal.app window as the universal mac
+    fallback (covers VS Code's integrated terminal, JetBrains, plain ssh, etc.,
+    where we can't split in place but can still open a real window via
+    AppleScript) > printing the command for the user to paste.
+    """
     if os.environ.get("TMUX"):
         return "tmux"
     term_program = os.environ.get("TERM_PROGRAM", "")
     if term_program == "iTerm.app":
         return "iterm"
     if term_program == "Apple_Terminal":
+        return "terminal"
+    # Universal macOS fallback: open a fresh Terminal.app window via AppleScript.
+    if sys.platform == "darwin" and shutil.which("osascript"):
         return "terminal"
     return "print"
 
