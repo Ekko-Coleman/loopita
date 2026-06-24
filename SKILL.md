@@ -149,6 +149,7 @@ python scripts/tracking.py stale --home "$LOOPITA_HOME" --run-id <run-id> \
   "this is sequential, not parallel"), stop spawning conflicting slices and re-select the strategy
   for the affected subtree — full procedure in `references/strategy-selection.md` (Adaptive
   replanning). Replanning early is cheap; a doomed merge is expensive.
+- **Dashboard frame (optional):** render the whole run as one styled frame — `python scripts/render.py frame --home "$LOOPITA_HOME" --run-id <run-id>` (plain text if `rich` is absent). For a continuously-updating view the *user* can run `python scripts/monitor.py --run-id <run-id>` in a side pane. See `references/tui-dashboard.md`.
 
 ## 6. Collect
 
@@ -228,6 +229,7 @@ All helpers: `python scripts/<name>.py [--home <dir>] <subcommand> [args]`, prin
 | agent tracking | `tracking.py create` · `tracking.py update` · `tracking.py get` · `tracking.py query` · `tracking.py stale` |
 | audit log | `audit.py log` · `audit.py query` · `audit.py summary` |
 | report + retro | `report.py build` · `report.py retro` |
+| live dashboard | `render.py frame` · `render.py json` · `monitor.py` (live, user-run) |
 | learnings | `learnings.py add` · `learnings.py list` · `learnings.py apply` |
 
 ## Reference files (read on demand)
@@ -235,6 +237,7 @@ All helpers: `python scripts/<name>.py [--home <dir>] <subcommand> [args]`, prin
 - `references/conventions.md` — runtime file layout + all schemas (the contract).
 - `references/strategy-selection.md` — choosing linear/loop/swarm; adaptive replanning.
 - `references/model-selection.md` — choosing the cheapest capable model per sub-agent.
+- `references/tui-dashboard.md` — the on-demand dashboard frame + optional live monitor (optional `rich`).
 - `references/subagent-contract.md` — the boilerplate brief for every sub-agent.
 - `references/pause-resume.md` — checkpoint/resume + crash recovery + quota pacing.
 - `references/reporting.md` — metric capture, final report, retro query mode.

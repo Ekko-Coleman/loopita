@@ -42,9 +42,12 @@ orchestration (multi-step builds, long loops, parallelizable features, research 
 | `references/conventions.md` | **The contract** — runtime file layout + tracking/audit/task schemas. |
 | `references/*.md` | Strategy selection, model selection, sub-agent contract, pause/resume, reporting, learning. |
 | `scripts/*.py` | `state`, `tracking`, `audit`, `report`, `learnings` — stdlib-only helpers. |
+| `scripts/render.py`, `scripts/monitor.py` | On-demand dashboard frame + optional live monitor (optional `rich` dependency). |
 | `evals/evals.json` | skill-creator test orchestration tasks. |
 
 ## Configuration
 
 Edit `config/defaults.json`, or ask Loopita to update a default during a session. Runtime state is
 written under `.loopita/` (git-ignored) in your project.
+
+`rich` is an optional dependency — the dashboard renders styled when it's installed and falls back to plain text otherwise; the core scripts remain stdlib-only.
