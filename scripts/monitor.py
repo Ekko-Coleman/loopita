@@ -54,7 +54,7 @@ def _now_iso() -> str:
 
 # Animation framerate and the time for one pulse to lap the border.
 ANIM_FPS = 15
-LAP_SECONDS = 2.5
+LAP_SECONDS = 4.0  # slower lap = calmer, more subtle motion
 
 
 def run_monitor(home: Path, run_id: str, interval: float) -> None:

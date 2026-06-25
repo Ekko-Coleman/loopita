@@ -58,8 +58,8 @@ STATUS_STYLE: dict[str, tuple[str, str]] = {
 # ---------------------------------------------------------------------------
 
 _BORDER_BASE = (37, 99, 235)      # steady blue (#2563eb)
-_BORDER_BRIGHT = (236, 244, 255)  # whiter-blue pulse head (#ecf4ff)
-_TITLE_STYLE = "bold #eaf2ff"
+_BORDER_BRIGHT = (140, 178, 250)  # softly lifted blue pulse head (#8cb2fa) — subtle, not white
+_TITLE_STYLE = "bold #cfe0ff"
 
 
 class _PulseBox:
@@ -101,13 +101,13 @@ class _PulseBox:
         # Pulse heads (center index, max brightness, comet length).
         heads: list[tuple[float, float, int]] = []
         if self.pulses > 0:
-            comet = max(3, int(ring_len * 0.08))
+            comet = max(3, int(ring_len * 0.09))
             for k in range(self.pulses):
                 center = ((self.phase + k / self.pulses) % 1.0) * ring_len
-                heads.append((center, 1.0, comet))
-        else:  # idle: one slow, dim pulse
-            comet = max(4, int(ring_len * 0.14))
-            heads.append((((self.phase * 0.5) % 1.0) * ring_len, 0.40, comet))
+                heads.append((center, 0.7, comet))   # gentle lift, not full white
+        else:  # idle: one slow, very soft pulse
+            comet = max(4, int(ring_len * 0.16))
+            heads.append((((self.phase * 0.5) % 1.0) * ring_len, 0.22, comet))
 
         def brightness(i: int) -> float:
             best = 0.0
@@ -117,7 +117,7 @@ class _PulseBox:
                     best = max(best, max_b * (1.0 - behind / comet_len))
                 forward = (i - center) % ring_len  # tiny leading glow
                 if forward < 2:
-                    best = max(best, max_b * (1.0 - forward / 2) * 0.55)
+                    best = max(best, max_b * (1.0 - forward / 2) * 0.4)
             return best
 
         def border_style(i: int) -> "Style":
@@ -125,7 +125,7 @@ class _PulseBox:
             r = int(_BORDER_BASE[0] + (_BORDER_BRIGHT[0] - _BORDER_BASE[0]) * b)
             g = int(_BORDER_BASE[1] + (_BORDER_BRIGHT[1] - _BORDER_BASE[1]) * b)
             bl = int(_BORDER_BASE[2] + (_BORDER_BRIGHT[2] - _BORDER_BASE[2]) * b)
-            return Style(color=f"#{r:02x}{g:02x}{bl:02x}", bold=b > 0.5)
+            return Style(color=f"#{r:02x}{g:02x}{bl:02x}", bold=b > 0.8)
 
         title = f" {self.title} "
         t_start = max(1, (cols - len(title)) // 2)
