@@ -2,9 +2,17 @@
 """Loopita live run monitor.
 
 Runs in a separate terminal pane: `python scripts/monitor.py --run-id <id>`.
-Uses rich.live.Live to tail a Loopita run's state files and auto-refresh the
-same dashboard frame that render.py produces (~4 Hz). NEVER invoked by the
-orchestrator — it owns its own pane.
+Uses rich.live.Live to tail a Loopita run's state files and re-render the same
+dashboard frame that render.py produces. NEVER invoked by the orchestrator —
+it owns its own pane.
+
+Two cadences, decoupled on purpose:
+  * the animated pulse border redraws at ANIM_FPS (smooth motion), so there is
+    always a live activity signal even when no files change; and
+  * the run state is re-read from disk every `--interval` seconds (the numbers
+    only change when the orchestrator/agents write them — see references).
+The number of racing pulses tracks the count of in-progress agents, read live
+from the tracking files.
 
 `rich` is required for this script (unlike render.py where it is optional).
 If rich is not installed, a clear error message is printed.
@@ -44,12 +52,18 @@ def _now_iso() -> str:
 # Live monitor loop
 # ---------------------------------------------------------------------------
 
-def run_monitor(home: Path, run_id: str, interval: float) -> None:
-    """Run the live dashboard, refreshing every `interval` seconds.
+# Animation framerate and the time for one pulse to lap the border.
+ANIM_FPS = 15
+LAP_SECONDS = 2.5
 
-    The FIRST gather_frame_data call (before entering Live) is NOT wrapped
-    in the tolerant except — if the run_id is bad, let it fail loudly so the
-    user gets a clear error.
+
+def run_monitor(home: Path, run_id: str, interval: float) -> None:
+    """Run the live dashboard.
+
+    The border animates at ANIM_FPS regardless of file activity; the run state
+    is re-read from disk every `interval` seconds. The FIRST gather_frame_data
+    call (before entering Live) is NOT wrapped in the tolerant except — if the
+    run_id is bad, let it fail loudly so the user gets a clear error.
     """
     if not render.HAS_RICH:
         c.fail("monitor requires the optional 'rich' package (pip install rich). "
@@ -57,20 +71,30 @@ def run_monitor(home: Path, run_id: str, interval: float) -> None:
 
     from rich.live import Live
 
+    frame_dt = 1.0 / ANIM_FPS
+
     # First gather — fail loudly if run is not found or malformed.
     data = render.gather_frame_data(home, run_id, now=_now_iso())
 
-    with Live(render.build_frame(data), refresh_per_second=4, screen=False) as live:
+    start = time.monotonic()
+    last_read = start
+
+    with Live(render.build_frame(data, 0.0),
+              refresh_per_second=ANIM_FPS, screen=False) as live:
         try:
             while True:
-                time.sleep(interval)
-                try:
-                    data = render.gather_frame_data(home, run_id, now=_now_iso())
-                    live.update(render.build_frame(data))
-                except (FileNotFoundError, ValueError, json.JSONDecodeError):
-                    # Tolerate transient mid-write reads while tailing a live run;
-                    # keep the previous frame and continue.
-                    continue
+                now_m = time.monotonic()
+                # Re-read state at the slower file cadence; keep last data on a
+                # transient mid-write read so the animation never stutters.
+                if now_m - last_read >= interval:
+                    try:
+                        data = render.gather_frame_data(home, run_id, now=_now_iso())
+                    except (FileNotFoundError, ValueError, json.JSONDecodeError):
+                        pass
+                    last_read = now_m
+                phase = ((now_m - start) / LAP_SECONDS) % 1.0
+                live.update(render.build_frame(data, phase))
+                time.sleep(frame_dt)
         except KeyboardInterrupt:
             pass  # clean Ctrl-C: Live.__exit__ restores the terminal
 
@@ -191,8 +215,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--run-id", dest="run_id", default=None,
                    help="ID of the Loopita run to monitor (required unless --selftest)")
-    p.add_argument("--interval", type=float, default=0.25,
-                   help="seconds between file re-reads (default: 0.25)")
+    p.add_argument("--interval", type=float, default=0.5,
+                   help="seconds between state-file re-reads (default: 0.5); "
+                        "the border animation is always smooth regardless")
     p.add_argument("--selftest", action="store_true",
                    help="run internal smoke test and exit")
 

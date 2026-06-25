@@ -39,6 +39,43 @@ The frame has four sections:
    appears on agents whose in-progress tracking file hasn't been updated within `stale_tracking_seconds`
    (default 900s = 15 minutes); stale agents may be stuck.
 
+## The animated border (live activity indicator)
+
+The whole dashboard sits inside a rounded box with **"Loopita" centered on the top edge**. The
+border is a steady blue, and it doubles as a real-time activity gauge:
+
+- **One whiter-blue light pulse races clockwise around the border for each *active* (in-progress)
+  agent.** Four agents running → four pulses; if one finishes, the next refresh shows three. The
+  pulses are evenly spaced so they appear to chase each other around the box.
+- **Idle** (no agents in-progress) shows a single dim pulse drifting slowly — a gentle "breathing"
+  so you can tell the monitor is alive and connected.
+- The pulse count comes from the agents' tracking-file `status` fields, read live on every refresh,
+  so it reflects real concurrency even between milestone writes.
+
+This animation only appears in the **live monitor** (`monitor.py`), which redraws the border at
+~15 fps. The one-shot `render.py frame` prints a single static snapshot (pulses frozen at their
+start positions). In plain-text mode (no `rich`) there is no border animation — the active-agent
+count is shown as text in the header instead.
+
+## What updates in real time (and what doesn't)
+
+The dashboard is a live view of the run's **state files**, so it is exactly as live as those files:
+
+| Element | Liveness |
+|---------|----------|
+| Border pulses / **active-agent count** | **Live** — from agent `status` each refresh |
+| Agent **status** and latest **note** | **Live** — as each agent updates its tracking file |
+| **Elapsed** for in-progress agents | **Live** — recomputed from the clock each refresh (ticks up) |
+| **Run elapsed** in the header | **Live** — clock-driven |
+| **Tokens** and final **durations** | **Milestone-bound** — these land only when the orchestrator logs a `signal` event at completion (the token count only exists in the completion notification); they will read `0` until then |
+| Task **done/total** | Updates when the orchestrator sets task status — promptly if it writes status on spawn/finish |
+
+So the border motion, active count, statuses, and live-elapsed move continuously; the *numeric*
+token/duration totals step forward at milestones because that data doesn't exist until an agent
+finishes. To keep the numbers feeling current, the orchestrator should write task status to
+`in-progress` when it spawns an agent and to `done` (with the `signal` event carrying `--tokens`
+/`--duration-ms`) the moment it finishes — see `references/reporting.md`.
+
 ## Status glyphs and colors
 
 Each status appears with a Unicode glyph and color:
