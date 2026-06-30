@@ -1,0 +1,11 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Orchestration",
+      "description": "Strategy-aware orchestration for complex or large work — single passes, bounded loops, and parallel sub-agent swarms.",
+      "skills": ["loopita"]
+    }
+  ]
+}

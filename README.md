@@ -11,7 +11,7 @@ files, reports a detailed audit on completion, and learns across runs.
 ## Design stance: a thin layer over the engine
 
 Claude Code already provides the heavy machinery — the **`Workflow`** tool (parallel fan-out,
-pipelines, git-worktree isolation, token budgets, resume), **`/loop` + `ScheduleWakeup`** (looping
+pipelines, git-worktree isolation, token budgets, resume), **`/loop`** + **`ScheduleWakeup`** (looping
 with explicit exit conditions and quota-aware pacing), and **sub-agents via `Task`**. Loopita does
 **not** reimplement those. It is a set of instructions (`SKILL.md` + `references/`) that teach the
 orchestrating Claude *when and how* to drive them, plus small Python scripts that fill the gaps the
@@ -35,19 +35,26 @@ orchestration (multi-step builds, long loops, parallelizable features, research 
 
 ## Layout
 
-| Path | Role |
-|------|------|
-| `SKILL.md` | Orchestrator brain: invoke → select strategy → drive primitives → report → retro. |
-| `config/defaults.json` | Defaults: context threshold (300k), per-loop limit (24h), quota window (5h). User-overridable. |
-| `references/conventions.md` | **The contract** — runtime file layout + tracking/audit/task schemas. |
-| `references/*.md` | Strategy selection, model selection, sub-agent contract, pause/resume, reporting, learning. |
-| `scripts/*.py` | `state`, `tracking`, `audit`, `report`, `learnings` — stdlib-only helpers. |
+| Path                                                              | Role                                                                                                                          |
+| ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `SKILL.md`                                                        | Orchestrator brain: invoke → select strategy → drive primitives → report → retro.                                             |
+| `config/defaults.json`                                            | Defaults: context threshold (300k), per-loop limit (24h), quota window (5h). User-overridable.                                |
+| `references/conventions.md`                                       | **The contract** — runtime file layout + tracking/audit/task schemas.                                                         |
+| `references/*.md`                                                 | Strategy selection, model selection, sub-agent contract, pause/resume, reporting, learning.                                   |
+| `scripts/*.py`                                                    | `state`, `tracking`, `audit`, `report`, `learnings` — stdlib-only helpers.                                                    |
 | `scripts/render.py`, `scripts/monitor.py`, `scripts/dashboard.py` | On-demand dashboard frame, optional live monitor, and a launcher that checks deps + spawns a side pane (all optional `rich`). |
-| `evals/evals.json` | skill-creator test orchestration tasks. |
+| `evals/evals.json`                                                | skill-creator test orchestration tasks.                                                                                       |
 
 ## Configuration
 
 Edit `config/defaults.json`, or ask Loopita to update a default during a session. Runtime state is
 written under `.loopita/` (git-ignored) in your project.
 
-`rich` is an optional dependency — the dashboard renders styled when it's installed and falls back to plain text otherwise; the core scripts remain stdlib-only.
+`rich` is an optional dependency — the dashboard renders styled when it's installed and falls back
+to plain text otherwise; the core scripts remain stdlib-only.
+
+## Author & license
+
+Created by **Mike Coleman** (<mikemadman@gmail.com>). Released under the [MIT License](LICENSE).
+
+Listed on [skills.sh](https://skills.sh/Ekko-Coleman/loopita).

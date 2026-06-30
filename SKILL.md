@@ -8,6 +8,10 @@ description: >-
   into scoped slices, keeps your main context lean, and produces an audit trail. Especially reach
   for it when a task is too big to track in one context or benefits from running sub-agents in
   parallel.
+license: MIT
+metadata:
+  author: Mike Coleman <mikemadman@gmail.com>
+  version: "0.1.0"
 ---
 
 # Loopita — the orchestrator
@@ -49,8 +53,6 @@ not autonomous background processes. Never imply Loopita does things on its own 
 
 Steps 4–6 repeat per task/wave. Read the referenced file when you reach a step that needs depth —
 this SKILL.md is the map; the `references/` files are the territory.
-
----
 
 ## 1. Prepare
 
@@ -196,8 +198,6 @@ answer from the audit log, not memory (`references/reporting.md` for retro mode 
   `learnings.py add --scope persistent --level <…>`. These are read at the next invocation (step 1)
   and shape its initial strategy. Full model + examples in **`references/learning.md`**.
 
----
-
 ## Pause / resume
 
 Two cases, **both within a single session** (no cross-session survival — be honest about that):
@@ -212,8 +212,6 @@ Two cases, **both within a single session** (no cross-session survival — be ho
 Quota pacing is advisory and you-driven: estimate usage over the 5h window from logged `tokens`,
 checkpoint with `--reason quota` before you'd cross the limit, and `ScheduleWakeup` to resume on
 reset. Full procedures in **`references/pause-resume.md`**.
-
----
 
 ## Script quick reference
 
