@@ -40,6 +40,11 @@ Read the task and look for these signals. Most tasks emit more than one — weig
 Strategies **nest**: a loop body can fan out a swarm; a swarm pipeline's final stage can be a
 linear merge `Task`. Pick the outermost shape first, then recurse per slice.
 
+**Model selection is orthogonal to strategy** — see `model-selection.md`. Once you've picked the
+shape, choose the cheapest capable model *per agent*: swarm slices are often mechanical (haiku/
+sonnet) while the merge/sign-off stage may warrant a stronger model; a loop's fix-agent is sized to
+the failure's difficulty. Don't default sub-agents to Opus.
+
 ## The merge step (swarm only)
 
 Parallel agents commit to their own worktrees. Reconcile them with **either** a final

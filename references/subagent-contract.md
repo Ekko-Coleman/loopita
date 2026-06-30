@@ -8,6 +8,11 @@ context (spec §2.1–2.3).
 
 Fill the `{{…}}` placeholders per agent, then paste the block verbatim into the agent prompt.
 
+Before you spawn, also choose the **model** this agent runs on (the `model` parameter on `Task`/
+`Agent`, or `agent({ model })` in a `Workflow`) — sized to the task's difficulty and how complete
+this brief is. A thorough, well-scoped contract is exactly what lets a *cheaper* model succeed, so
+the contract and a smaller model go together. See `model-selection.md`.
+
 ## The block (copy-paste, fill placeholders)
 
 ```

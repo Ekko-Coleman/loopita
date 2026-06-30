@@ -61,6 +61,7 @@ source of truth for "what's left."
   "title": "implement login endpoint",
   "scope": "files/dirs or component this task owns; non-overlapping for swarm",
   "strategy": "linear | loop | swarm",
+  "model": "opus | sonnet | haiku | fable | null (null = sub-agent inherits the orchestrator's model)",
   "status": "pending | in-progress | done | blocked",
   "agent_ids": ["login-builder"],
   "depends_on": ["t0"],
@@ -133,13 +134,14 @@ The report and retro are assembled from this log, so log every meaningful transi
   "task_id": "t1",
   "event": "spawn | status | signal | blocker | escalation | merge | checkpoint | report | learning | strategy",
   "strategy": "linear | loop | swarm | null",
+  "model": "opus | sonnet | haiku | fable | null (the model the agent ran on; stamp it on spawn/signal)",
   "tokens": 84852,
   "duration_ms": 23332,
   "note": "free-text detail"
 }
 ```
 
-`agent_id`, `task_id`, `tokens`, `duration_ms` are nullable. `tokens`/`duration_ms` come from the
+`agent_id`, `task_id`, `model`, `tokens`, `duration_ms` are nullable. `tokens`/`duration_ms` come from the
 `Task`/`Workflow` completion notifications — capture them when an agent finishes (see
 `reporting.md`).
 

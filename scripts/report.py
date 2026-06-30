@@ -94,17 +94,26 @@ def build_report(home: Path, run_id: str) -> str:
     out.append(f"**Status:** {run.get('status')}")
     out.append("")
 
+    # Model per agent, sourced from the first audit event that names one.
+    model_by_agent: dict[str, str] = {}
+    for r in audit_rows:
+        aid = r.get("agent_id")
+        mdl = r.get("model")
+        if aid and mdl and aid not in model_by_agent:
+            model_by_agent[aid] = mdl
+
     # Per-task table
     out.append("## Tasks")
     out.append("")
-    out.append("| Task | Technique | Status | Tokens | Elapsed |")
-    out.append("| --- | --- | --- | --- | --- |")
+    out.append("| Task | Technique | Model | Status | Tokens | Elapsed |")
+    out.append("| --- | --- | --- | --- | --- | --- |")
     for t in tasks:
         tid = t.get("task_id", "")
         agg = by_task.get(tid, {})
         out.append(
             f"| {tid}: {t.get('title', '')} "
             f"| {t.get('strategy') or '-'} "
+            f"| {t.get('model') or '-'} "
             f"| {t.get('status', '')} "
             f"| {_fmt_tokens(agg.get('tokens'))} "
             f"| {_fmt_ms(agg.get('duration_ms'))} |"
@@ -114,10 +123,11 @@ def build_report(home: Path, run_id: str) -> str:
     # Per-agent table
     out.append("## Agents")
     out.append("")
-    out.append("| Agent | Task | Tokens | Elapsed |")
-    out.append("| --- | --- | --- | --- |")
+    out.append("| Agent | Task | Model | Tokens | Elapsed |")
+    out.append("| --- | --- | --- | --- | --- |")
     # Map agent -> task via the spawn/signal audit events.
     agent_task: dict[str, str] = {}
+    task_model: dict[str, str | None] = {t.get("task_id", ""): t.get("model") for t in tasks}
     for r in audit_rows:
         aid = r.get("agent_id")
         tid = r.get("task_id")
@@ -125,14 +135,19 @@ def build_report(home: Path, run_id: str) -> str:
             agent_task[aid] = tid
     for aid in sorted(by_agent):
         agg = by_agent[aid]
+        tid = agent_task.get(aid)
+        # Prefer the model named in the agent's own audit events; fall back to
+        # the model recorded on its task.
+        model = model_by_agent.get(aid) or task_model.get(tid or "") or "-"
         out.append(
             f"| {aid} "
-            f"| {agent_task.get(aid, '-')} "
+            f"| {tid or '-'} "
+            f"| {model} "
             f"| {_fmt_tokens(agg.get('tokens'))} "
             f"| {_fmt_ms(agg.get('duration_ms'))} |"
         )
     if not by_agent:
-        out.append("| _none_ | - | 0 | 0s |")
+        out.append("| _none_ | - | - | 0 | 0s |")
     out.append("")
 
     # Blockers & resolutions
@@ -177,20 +192,20 @@ def _selftest(home: Path) -> None:
     })
     c.append_jsonl(rd / "tasks.jsonl", {
         "task_id": "t1", "title": "login endpoint", "scope": "auth",
-        "strategy": "swarm", "status": "done", "agent_ids": ["a1"],
-        "depends_on": [], "signal_summary": "ok",
+        "strategy": "swarm", "model": "haiku", "status": "done",
+        "agent_ids": ["a1"], "depends_on": [], "signal_summary": "ok",
         "created_at": "x", "updated_at": "y",
     })
     for ev in [
         {"ts": "2026-06-24T17:31:00Z", "run_id": rid, "agent_id": "a1",
          "task_id": "t1", "event": "spawn", "strategy": "swarm",
-         "tokens": None, "duration_ms": None, "note": "go"},
+         "model": "haiku", "tokens": None, "duration_ms": None, "note": "go"},
         {"ts": "2026-06-24T17:35:00Z", "run_id": rid, "agent_id": "a1",
          "task_id": "t1", "event": "blocker", "strategy": "swarm",
-         "tokens": None, "duration_ms": None, "note": "missing db fixture"},
+         "model": "haiku", "tokens": None, "duration_ms": None, "note": "missing db fixture"},
         {"ts": "2026-06-24T17:40:00Z", "run_id": rid, "agent_id": "a1",
          "task_id": "t1", "event": "signal", "strategy": "swarm",
-         "tokens": 84852, "duration_ms": 23332, "note": "resolved, 3 tests"},
+         "model": "haiku", "tokens": 84852, "duration_ms": 23332, "note": "resolved, 3 tests"},
     ]:
         c.append_jsonl(rd / "audit.jsonl", ev)
 
@@ -202,6 +217,9 @@ def _selftest(home: Path) -> None:
     assert "missing db fixture" in md
     assert "resolved by" in md  # blocker paired to its signal
     assert "Total tokens:** 84,852" in md, md
+    assert "| Task | Technique | Model | Status | Tokens | Elapsed |" in md, md
+    assert "| Agent | Task | Model | Tokens | Elapsed |" in md, md
+    assert "haiku" in md, md  # model column populated from task + audit events
 
     # retro is a filtered query
     import io

@@ -15,10 +15,13 @@ instant an agent completes, log them:
 ```
 python scripts/audit.py --home "$LOOPITA_HOME" log --run-id <run-id> \
   --agent-id <agent-id> --task-id <task-id> --event signal \
-  --strategy <linear|loop|swarm> \
+  --strategy <linear|loop|swarm> --model <opus|sonnet|haiku|fable> \
   --tokens <from notification> --duration-ms <from notification> \
   --note "<one-line outcome>" --ts <ISO-8601-UTC>
 ```
+
+Stamp `--model` (the tier you spawned the agent on) here and on the `spawn` event so the report's
+Model column is populated — see `model-selection.md`.
 
 Do this for every agent in a swarm as each branch finishes — a `Workflow` returns a notification
 per agent. If you defer it, the numbers are gone and the report's per-agent breakdown will be
@@ -37,9 +40,9 @@ python scripts/report.py --home "$LOOPITA_HOME" build --run-id <run-id>
 It reads `run.json`, `tasks.jsonl`, and `audit.jsonl` and assembles the report. Present it to the
 user. The report contains:
 
-- **Per-task** breakdown: title, `scope`, strategy/loop used, status, summed `tokens` + elapsed,
-  and the `signal_summary`.
-- **Per-agent** breakdown: `tokens` and `duration_ms` for each agent, under its task.
+- **Per-task** breakdown: title, `scope`, strategy/loop used, **model tier**, status, summed
+  `tokens` + elapsed, and the `signal_summary`.
+- **Per-agent** breakdown: **model**, `tokens`, and `duration_ms` for each agent, under its task.
 - **Technique per unit:** which primitive ran each task — `Task` (linear), `/loop` (loop), or
   `Workflow` (swarm) — and for loops, iteration count and end-condition.
 - **Blockers and resolutions:** every `blocker`/`escalation` event paired with how it resolved

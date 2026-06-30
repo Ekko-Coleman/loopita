@@ -40,11 +40,14 @@ orchestration (multi-step builds, long loops, parallelizable features, research 
 | `SKILL.md` | Orchestrator brain: invoke → select strategy → drive primitives → report → retro. |
 | `config/defaults.json` | Defaults: context threshold (300k), per-loop limit (24h), quota window (5h). User-overridable. |
 | `references/conventions.md` | **The contract** — runtime file layout + tracking/audit/task schemas. |
-| `references/*.md` | Strategy selection, sub-agent contract, pause/resume, reporting, learning. |
+| `references/*.md` | Strategy selection, model selection, sub-agent contract, pause/resume, reporting, learning. |
 | `scripts/*.py` | `state`, `tracking`, `audit`, `report`, `learnings` — stdlib-only helpers. |
+| `scripts/render.py`, `scripts/monitor.py`, `scripts/dashboard.py` | On-demand dashboard frame, optional live monitor, and a launcher that checks deps + spawns a side pane (all optional `rich`). |
 | `evals/evals.json` | skill-creator test orchestration tasks. |
 
 ## Configuration
 
 Edit `config/defaults.json`, or ask Loopita to update a default during a session. Runtime state is
 written under `.loopita/` (git-ignored) in your project.
+
+`rich` is an optional dependency — the dashboard renders styled when it's installed and falls back to plain text otherwise; the core scripts remain stdlib-only.
